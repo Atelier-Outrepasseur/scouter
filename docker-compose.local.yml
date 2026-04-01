@@ -26,6 +26,7 @@ services:
       - ./app:/app/app
       - ./crawls:/var/www/crawls
       - ./logs:/app/logs
+      - ../scouter-enricher:/app/scouter-enricher
     environment:
       - PHP_CLI_SERVER_WORKERS=8
       - RENDERER_URL=http://renderer:3000

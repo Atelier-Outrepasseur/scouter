@@ -178,8 +178,36 @@ $isDirectPage = in_array($activeSection, ['categorize', 'config']);
                 <span><?= __('sidebar.pagerank_leak') ?></span>
             </a>
         </div>
+            <!-- Google -->
+        <div class="sidebar-panel-group">
+            <div class="sidebar-panel-group-title">Google</div>
+            <a href="?crawl=<?= $crawlId ?>&page=search-console" 
+            class="sidebar-panel-item <?= $page === 'search-console' ? 'active' : '' ?>">
+                <span class="material-symbols-outlined">search</span>
+                <span>Search Console</span>
+            </a>
+        </div>
+                <!-- Enrichissement -->
+        <div class="sidebar-panel-group">
+            <div class="sidebar-panel-group-title">Enrichissement</div>
+            <a href="?crawl=<?= $crawlId ?>&page=images"
+               class="sidebar-panel-item <?= $page === 'images' ? 'active' : '' ?>">
+                <span class="material-symbols-outlined">image</span>
+                <span>Images</span>
+            </a>
+            <a href="?crawl=<?= $crawlId ?>&page=hreflang"
+               class="sidebar-panel-item <?= $page === 'hreflang' ? 'active' : '' ?>">
+                <span class="material-symbols-outlined">translate</span>
+                <span>Hreflang</span>
+            </a>
+            <a href="?crawl=<?= $crawlId ?>&page=opengraph"
+               class="sidebar-panel-item <?= $page === 'opengraph' ? 'active' : '' ?>">
+                <span class="material-symbols-outlined">share</span>
+                <span>Open Graph</span>
+            </a>
+        </div>
     </div>
-    
+
     <!-- Section Crawl Comparison -->
     <div class="sidebar-panel-section" data-section="comparison" style="<?= $activeSection !== 'comparison' ? 'display: none;' : '' ?>">
         <div class="sidebar-panel-header">
