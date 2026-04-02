@@ -205,6 +205,16 @@ $isDirectPage = in_array($activeSection, ['categorize', 'config']);
                 <span class="material-symbols-outlined">share</span>
                 <span>Open Graph</span>
             </a>
+            <a href="?crawl=<?= $crawlId ?>&page=pagespeed"
+                class="sidebar-panel-item <?= $page === 'pagespeed' ? 'active' : '' ?>">
+                <span class="material-symbols-outlined">speed</span>
+                <span>PageSpeed</span>
+            </a>
+            <a href="?crawl=<?= $crawlId ?>&page=seo-score"
+                class="sidebar-panel-item <?= $page === 'seo-score' ? 'active' : '' ?>">
+                <span class="material-symbols-outlined">stars</span>
+                <span>Score SEO</span>
+            </a>
         </div>
     </div>
 
