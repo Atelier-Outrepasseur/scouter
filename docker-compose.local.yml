@@ -27,10 +27,12 @@ services:
       - ./crawls:/var/www/crawls
       - ./logs:/app/logs
       - ../scouter-enricher:/app/scouter-enricher
+      - ../scouter-enricher:/app/web/scouter-enricher
     environment:
       - PHP_CLI_SERVER_WORKERS=8
       - RENDERER_URL=http://renderer:3000
       - DATABASE_URL=postgresql://scouter:scouter@postgres:5432/scouter
+      - PAGESPEED_API_KEY=${PAGESPEED_API_KEY}
     restart: unless-stopped
     networks:
       - scouter-net

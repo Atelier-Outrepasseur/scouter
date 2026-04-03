@@ -14,16 +14,18 @@ try {
 
 if (!$enrichmentExists) {
     ?>
-    <h1 class="page-title"><?= __('sidebar.images') ?? 'Images' ?></h1>
-    <div style="padding: 3rem; text-align: center; max-width: 600px; margin: 2rem auto;">
-        <h2 style="margin-bottom: 1rem; color: var(--text-primary);">Enrichissement non lancé</h2>
-        <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">
-            Lancez le script d'enrichissement pour analyser les images.
-        </p>
-        <code style="display: block; background: var(--bg-secondary); padding: 1rem; border-radius: 8px; color: var(--text-secondary); font-size: 0.85rem;">
-            php scouter-enricher/enrich.php <?= $crawlId ?>
-        </code>
-    </div>
+    <h1 class="page-title">Analyse des images</h1>
+    <script src="/scouter-enricher/assets/enricher.js"></script>
+    <div id="enricher-launch"></div>
+    <script>
+    EnricherUI.renderLaunchButton('enricher-launch', {
+        action: 'enrich',
+        crawlId: <?= $crawlId ?>,
+        label: 'Analyse des images',
+        icon: 'image',
+        description: 'Extrait les images, hreflang et Open Graph depuis le HTML crawlé.'
+    });
+    </script>
     <?php
     return;
 }
@@ -35,14 +37,18 @@ $hasData = $stmt->fetchColumn() > 0;
 
 if (!$hasData) {
     ?>
-    <h1 class="page-title">Images</h1>
-    <div style="padding: 3rem; text-align: center; max-width: 600px; margin: 2rem auto;">
-        <h2 style="margin-bottom: 1rem; color: var(--text-primary);">Pas de données pour ce crawl</h2>
-        <p style="color: var(--text-secondary);">Lancez l'enrichissement :</p>
-        <code style="display: block; background: var(--bg-secondary); padding: 1rem; border-radius: 8px; color: var(--text-secondary); font-size: 0.85rem; margin-top: 1rem;">
-            php scouter-enricher/enrich.php <?= $crawlId ?>
-        </code>
-    </div>
+    <h1 class="page-title">Analyse des images</h1>
+    <script src="/scouter-enricher/assets/enricher.js"></script>
+    <div id="enricher-launch"></div>
+    <script>
+    EnricherUI.renderLaunchButton('enricher-launch', {
+        action: 'enrich',
+        crawlId: <?= $crawlId ?>,
+        label: 'Analyse des images',
+        icon: 'image',
+        description: 'Extrait les images, hreflang et Open Graph depuis le HTML crawlé.'
+    });
+    </script>
     <?php
     return;
 }

@@ -112,9 +112,84 @@ if ($stmt->fetchColumn() == 0) {
     ?>
     <h1 class="page-title">Search Console — <?= htmlspecialchars($gscProperty->display_name) ?></h1>
     <div style="padding: 3rem; text-align: center; max-width: 600px; margin: 2rem auto;">
-        <h2 style="margin-bottom: 1rem; color: var(--text-primary);">Données non synchronisées</h2>
-        <p style="color: var(--text-secondary);">Lancez une synchronisation depuis scouter-google.</p>
+        <div style="font-size: 3rem; margin-bottom: 1rem; color: var(--text-secondary);">
+            <span class="material-symbols-outlined" style="font-size: 3rem;">sync</span>
+        </div>
+        <h2 style="margin-bottom: 0.75rem; color: var(--text-primary);">Données non synchronisées</h2>
+        <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">
+            Synchronisez les données Search Console pour <strong><?= htmlspecialchars($gscProperty->display_name) ?></strong>
+        </p>
+        <button id="gsc-sync-btn" onclick="syncGSC()"
+            style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1.5rem;
+                   background: var(--primary-color); color: white; border: none; border-radius: 8px;
+                   cursor: pointer; font-size: 1rem;">
+            <span class="material-symbols-outlined" style="font-size: 1.2rem;">sync</span>
+            Synchroniser
+        </button>
+        <div id="gsc-sync-status" style="margin-top: 1.5rem; display: none;">
+            <div style="background: var(--bg-secondary, #eee); border-radius: 8px; height: 12px; overflow: hidden; margin-bottom: 0.75rem;">
+                <div id="gsc-sync-bar" style="width: 0%; height: 100%; background: var(--primary-color); border-radius: 8px; transition: width 0.5s ease;"></div>
+            </div>
+            <p id="gsc-sync-msg" style="color: var(--text-secondary); font-size: 0.85rem;">Synchronisation...</p>
+        </div>
     </div>
+    <script>
+    async function syncGSC() {
+        const btn = document.getElementById('gsc-sync-btn');
+        const status = document.getElementById('gsc-sync-status');
+        const bar = document.getElementById('gsc-sync-bar');
+        const msg = document.getElementById('gsc-sync-msg');
+
+        btn.style.display = 'none';
+        status.style.display = 'block';
+        msg.textContent = 'Synchronisation des mots-clés...';
+        bar.style.width = '10%';
+
+        const email = '<?= addslashes($gscProperty->email) ?>';
+        const propertyId = <?= $gscPropertyId ?>;
+
+        try {
+            // 1. Sync keywords
+            msg.textContent = 'Synchronisation des mots-clés...';
+            bar.style.width = '10%';
+            await fetch('http://localhost:3001/gsc/sync/keywords', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, propertyId })
+            });
+
+            // 2. Sync pages
+            msg.textContent = 'Synchronisation des pages...';
+            bar.style.width = '40%';
+            await fetch('http://localhost:3001/gsc/sync/pages', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, propertyId })
+            });
+
+            // 3. Sync daily
+            msg.textContent = 'Synchronisation des données journalières...';
+            bar.style.width = '70%';
+            await fetch('http://localhost:3001/gsc/sync/daily', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, propertyId })
+            });
+
+            // Done
+            bar.style.width = '100%';
+            bar.style.background = '#34a853';
+            msg.innerHTML = '<span style="color: #34a853;">Synchronisation terminée ! Rechargement...</span>';
+            setTimeout(() => window.location.reload(), 1000);
+
+        } catch (err) {
+            bar.style.background = '#ea4335';
+            msg.innerHTML = '<span style="color: #ea4335;">Erreur : ' + err.message + '</span>';
+            btn.style.display = 'inline-flex';
+            btn.innerHTML = '<span class="material-symbols-outlined" style="font-size: 1.2rem;">refresh</span> Réessayer';
+        }
+    }
+    </script>
     <?php
     return;
 }
@@ -385,6 +460,13 @@ function trendBadge($current, $previous, $inverse = false) {
 <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">
     <h1 class="page-title" style="margin: 0;">Search Console — <?= htmlspecialchars($gscProperty->display_name) ?></h1>
     <div style="display: flex; gap: 0.5rem; align-items: center;">
+        <button id="gsc-resync-btn" onclick="resyncGSC()" title="Resynchroniser les données"
+            style="display: inline-flex; align-items: center; gap: 0.25rem; padding: 0.35rem 0.75rem;
+                   background: none; border: 1px solid var(--border-color); border-radius: 6px;
+                   cursor: pointer; font-size: 0.85rem; color: var(--text-secondary);">
+            <span class="material-symbols-outlined" style="font-size: 1rem;">sync</span>
+            Sync
+        </button>
         <span style="color: var(--text-secondary); font-size: 0.85rem;">Période :</span>
         <?php foreach ([7 => '7j', 30 => '30j', 90 => '90j'] as $days => $label): ?>
             <a href="?crawl=<?= $crawlId ?>&page=search-console&gsc_range=<?= $days ?><?= $gscPropertyId ? '&gsc_property=' . $gscPropertyId : '' ?>"
@@ -395,6 +477,32 @@ function trendBadge($current, $previous, $inverse = false) {
         <?php endforeach; ?>
     </div>
 </div>
+<script>
+async function resyncGSC() {
+    const btn = document.getElementById('gsc-resync-btn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="material-symbols-outlined" style="font-size: 1rem; animation: gsc-spin 1s linear infinite;">sync</span> Sync...';
+
+    const email = '<?= addslashes($gscProperty->email) ?>';
+    const propertyId = <?= $gscPropertyId ?>;
+
+    try {
+        await fetch('http://localhost:3001/sync/all', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, gscPropertyId: propertyId })
+        });
+        window.location.reload();
+    } catch (err) {
+        btn.innerHTML = '<span class="material-symbols-outlined" style="font-size: 1rem;">sync_problem</span> Erreur';
+        btn.disabled = false;
+        setTimeout(() => {
+            btn.innerHTML = '<span class="material-symbols-outlined" style="font-size: 1rem;">sync</span> Sync';
+        }, 3000);
+    }
+}
+</script>
+<style>@keyframes gsc-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }</style>
 
 <div style="display: flex; flex-direction: column; gap: 1.5rem;">
 

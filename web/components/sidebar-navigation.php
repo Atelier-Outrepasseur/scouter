@@ -216,6 +216,14 @@ $isDirectPage = in_array($activeSection, ['categorize', 'config']);
                 <span>Score SEO</span>
             </a>
         </div>
+        <div class="sidebar-panel-group">
+        <div class="sidebar-panel-group-title">Outils</div>
+            <a href="?crawl=<?= $crawlId ?>&page=export"
+            class="sidebar-panel-item <?= $page === 'export' ? 'active' : '' ?>">
+                <span class="material-symbols-outlined">cloud_upload</span>
+                <span>Export</span>
+            </a>
+        </div>
     </div>
 
     <!-- Section Crawl Comparison -->
