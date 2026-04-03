@@ -462,6 +462,9 @@ function isSectionCollapsed($sectionName) {
                 case 'export':
                     include 'pages/export.php';
                     break;
+                case 'todolist':
+                    include 'pages/todolist.php';
+                    break;
                 case 'content-richness':
                     include 'pages/content-richness.php';
                     break;

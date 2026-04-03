@@ -221,6 +221,16 @@ $isDirectPage = in_array($activeSection, ['categorize', 'config']);
                 <span>Sitemap</span>
             </a>
         </div>
+        <!-- Todolist SEO -->
+        <div class="sidebar-panel-group">
+            <div class="sidebar-panel-group-title">Todolist</div>
+            <a href="?crawl=<?= $crawlId ?>&page=todolist"
+               class="sidebar-panel-item <?= $page === 'todolist' ? 'active' : '' ?>">
+                <span class="material-symbols-outlined">checklist</span>
+                <span>Todolist SEO</span>
+            </a>
+        </div>
+        <!-- Export -->
         <div class="sidebar-panel-group">
         <div class="sidebar-panel-group-title">Outils</div>
             <a href="?crawl=<?= $crawlId ?>&page=export"
