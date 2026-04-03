@@ -215,6 +215,11 @@ $isDirectPage = in_array($activeSection, ['categorize', 'config']);
                 <span class="material-symbols-outlined">stars</span>
                 <span>Score SEO</span>
             </a>
+            <a href="?crawl=<?= $crawlId ?>&page=sitemap"
+                class="sidebar-panel-item <?= $page === 'sitemap' ? 'active' : '' ?>">
+                <span class="material-symbols-outlined">map</span>
+                <span>Sitemap</span>
+            </a>
         </div>
         <div class="sidebar-panel-group">
         <div class="sidebar-panel-group-title">Outils</div>

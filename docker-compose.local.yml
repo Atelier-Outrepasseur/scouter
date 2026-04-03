@@ -80,6 +80,23 @@ services:
       mode: replicated
       replicas: 3
 
+  # Service Google (OAuth2, Search Console, GA4, Exports)
+  scouter-google:
+    build: ../scouter-google
+    ports:
+      - "3001:3001"
+    environment:
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+      - GOOGLE_REDIRECT_URI=http://localhost:3001/auth/google/callback
+      - DATABASE_URL=postgresql://scouter:scouter@postgres:5432/scouter
+      - PORT=3001
+    restart: unless-stopped
+    networks:
+      - scouter-net
+    depends_on:
+      - postgres
+
 networks:
   scouter-net:
     driver: bridge
