@@ -82,7 +82,7 @@ if (!$gscProperty) {
         <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">
             Aucune propriété GSC ne correspond au domaine <strong><?= htmlspecialchars($crawlDomain) ?></strong>.
         </p>
-        <a href="http://localhost:3001/auth/google" target="_blank" 
+        <a href="<?= scouter_google_url() ?>/auth/google" target="_blank" 
            style="display: inline-block; padding: 0.75rem 1.5rem; background: var(--primary-color); color: white; border-radius: 8px; text-decoration: none;">
             Connecter Google
         </a>
@@ -152,7 +152,7 @@ if ($stmt->fetchColumn() == 0) {
             // 1. Sync keywords
             msg.textContent = 'Synchronisation des mots-clés...';
             bar.style.width = '10%';
-            await fetch('http://localhost:3001/gsc/sync/keywords', {
+            await fetch('<?= scouter_google_url() ?>/gsc/sync/keywords', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email, propertyId })
@@ -161,7 +161,7 @@ if ($stmt->fetchColumn() == 0) {
             // 2. Sync pages
             msg.textContent = 'Synchronisation des pages...';
             bar.style.width = '40%';
-            await fetch('http://localhost:3001/gsc/sync/pages', {
+            await fetch('<?= scouter_google_url() ?>/gsc/sync/pages', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email, propertyId })
@@ -170,7 +170,7 @@ if ($stmt->fetchColumn() == 0) {
             // 3. Sync daily
             msg.textContent = 'Synchronisation des données journalières...';
             bar.style.width = '70%';
-            await fetch('http://localhost:3001/gsc/sync/daily', {
+            await fetch('<?= scouter_google_url() ?>/gsc/sync/daily', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email, propertyId })
@@ -487,7 +487,7 @@ async function resyncGSC() {
     const propertyId = <?= $gscPropertyId ?>;
 
     try {
-        await fetch('http://localhost:3001/sync/all', {
+        await fetch('<?= scouter_google_url() ?>/sync/all', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ email, gscPropertyId: propertyId })
