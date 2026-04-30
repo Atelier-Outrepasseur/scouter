@@ -58,7 +58,7 @@ body {
 
 /* Header */
 .header {
-    background: linear-gradient(135deg, #1a252f 0%, #2C3E50 100%);
+    background: linear-gradient(135deg, #1F1E1B 0%, #282725 100%);
     color: white;
     padding: 1rem 2rem;
     box-shadow: 0 4px 15px rgba(0,0,0,0.2);
@@ -68,7 +68,7 @@ body {
     position: sticky;
     top: 0;
     z-index: 1001;
-    border-bottom: 1px solid rgba(78, 205, 196, 0.2);
+    border-bottom: 1px solid rgba(224, 170, 92, 0.2);
 }
 
 .header-brand {
@@ -891,15 +891,15 @@ body {
 
 /* Style Export - Primary/Vert */
 .btn-table-action.btn-export {
-    background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
     color: white;
     border: none;
-    box-shadow: 0 2px 6px rgba(78, 205, 196, 0.25);
+    box-shadow: 0 2px 6px rgba(224, 170, 92, 0.25);
 }
 
 .btn-table-action.btn-export:hover {
-    background: linear-gradient(135deg, var(--primary-dark) 0%, #3a9188 100%);
-    box-shadow: 0 4px 12px rgba(78, 205, 196, 0.35);
+    background: linear-gradient(135deg, var(--primary-dark) 0%, #B07F36 100%);
+    box-shadow: 0 4px 12px rgba(224, 170, 92, 0.35);
     transform: translateY(-1px);
 }
 
@@ -1497,7 +1497,7 @@ body {
 
 .log-bar-fill {
     height: 100%;
-    background: linear-gradient(90deg, #4EC9B0 0%, #6A9955 100%);
+    background: linear-gradient(90deg, var(--primary-color) 0%, var(--primary-dark) 100%);
     transition: width 0.3s ease;
     border-radius: 4px;
 }
@@ -1649,7 +1649,7 @@ body {
 }
 
 .crawl-row-clickable:hover {
-    background: linear-gradient(90deg, rgba(78, 205, 196, 0.04) 0%, rgba(78, 205, 196, 0.08) 100%);
+    background: linear-gradient(90deg, rgba(224, 170, 92, 0.04) 0%, rgba(224, 170, 92, 0.08) 100%);
 }
 
 .crawl-row-clickable:last-child {
@@ -2289,7 +2289,7 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    background: linear-gradient(135deg, rgba(78, 201, 196, 0.05) 0%, rgba(68, 160, 141, 0.05) 100%);
+    background: linear-gradient(135deg, rgba(224, 170, 92, 0.05) 0%, rgba(116, 112, 77, 0.05) 100%);
 }
 
 .category-dropdown-item {
@@ -2895,7 +2895,7 @@ body {
 /* Zone Hero - Titre + Close uniquement */
 .crawl-modal-hero {
     padding: 0.75rem 1.25rem;
-    background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
     flex-shrink: 0;
 }
 
@@ -3649,7 +3649,7 @@ body {
     width: 48px;
     height: 48px;
     margin: 0 auto 0.75rem;
-    background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
     border-radius: 50%;
     display: flex;
     align-items: center;
@@ -4392,7 +4392,7 @@ body {
 .icon-rail {
     width: 100px;
     min-width: 100px;
-    background: linear-gradient(180deg, #1a252f 0%, #2C3E50 100%);
+    background: linear-gradient(180deg, #1F1E1B 0%, #282725 100%);
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -4461,9 +4461,9 @@ body {
 }
 
 .icon-rail-item.active {
-    background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
     color: white;
-    box-shadow: 0 4px 15px rgba(78, 205, 196, 0.4);
+    box-shadow: 0 4px 15px rgba(224, 170, 92, 0.4);
 }
 
 .icon-rail-item.active .icon-rail-label {
@@ -4615,7 +4615,7 @@ body {
 }
 
 .sidebar-panel-item.active {
-    background: linear-gradient(90deg, rgba(78, 205, 196, 0.2) 0%, rgba(78, 205, 196, 0.05) 100%);
+    background: linear-gradient(90deg, rgba(224, 170, 92, 0.2) 0%, rgba(224, 170, 92, 0.05) 100%);
     color: white;
     border-left-color: var(--primary-color);
     border-radius: 0 6px 6px 0;
