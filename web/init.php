@@ -19,7 +19,8 @@ require_once(__DIR__ . '/config/i18n.php');
  * - En local : http://localhost:3001
  */
 function scouter_google_url(): string {
-    return getenv('SCOUTER_GOOGLE_URL') ?: 'http://localhost:3001';
+    $url = getenv('SCOUTER_GOOGLE_URL');
+    return $url !== false ? $url : 'http://localhost:3001';
 }
 
 use App\Auth\Auth;
