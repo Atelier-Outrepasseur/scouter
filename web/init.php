@@ -13,6 +13,15 @@
 require_once(__DIR__ . "/../vendor/autoload.php");
 require_once(__DIR__ . '/config/i18n.php');
 
+/**
+ * Retourne l'URL de base du service scouter-google.
+ * - En prod : chaîne vide (URLs relatives, routées via Traefik)
+ * - En local : http://localhost:3001
+ */
+function scouter_google_url(): string {
+    return getenv('SCOUTER_GOOGLE_URL') ?: 'http://localhost:3001';
+}
+
 use App\Auth\Auth;
 
 // Obtenir le nom du fichier actuel

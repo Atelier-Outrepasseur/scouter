@@ -53,7 +53,7 @@ try {
             <p style="color: var(--text-secondary);">
                 Connectez votre compte Google pour exporter.
             </p>
-            <a href="http://localhost:3001/auth/google" target="_blank"
+            <a href="<?= scouter_google_url() ?>/auth/google" target="_blank"
                style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1.5rem;
                       background: var(--primary-color); color: white; border: none; border-radius: 8px;
                       text-decoration: none; font-size: 1rem;">
@@ -110,7 +110,7 @@ async function exportSheets() {
     status.innerHTML = '<p style="color: var(--text-secondary);">Création du Google Sheets et remplissage des données...</p>';
 
     try {
-        const response = await fetch('http://localhost:3001/export/sheets', {
+        const response = await fetch('<?= scouter_google_url() ?>/export/sheets', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -156,7 +156,7 @@ async function exportSlides() {
     status.innerHTML = '<p style="color: var(--text-secondary);">Création de la présentation Google Slides...</p>';
 
     try {
-        const response = await fetch('http://localhost:3001/export/slides', {
+        const response = await fetch('<?= scouter_google_url() ?>/export/slides', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
