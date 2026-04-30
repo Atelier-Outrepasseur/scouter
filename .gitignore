@@ -3,9 +3,13 @@ logs/
 crawls/
 composer.lock
 .env
+.env.local
+.env.*.local
 .claude
 .phpunit.cache/
 # Doctum
 docs/api/
 .doctum/
 doctum.phar
+*.log
+node_modules/
