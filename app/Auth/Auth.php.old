@@ -11,8 +11,7 @@ use App\Database\CrawlDatabase;
  * Gestion de l'authentification et des autorisations
  * 
  * Cette classe gère l'ensemble du système d'authentification utilisateur :
- * - Délégation de l'auth au hub central seo-hub
- * - Synchronisation des users avec la BDD Scouter
+ * - Connexion/déconnexion avec sessions PHP
  * - Gestion des rôles (admin, user, viewer)
  * - Contrôle d'accès aux projets et crawls
  * - Partage de projets entre utilisateurs
@@ -20,7 +19,7 @@ use App\Database\CrawlDatabase;
  * @package    Scouter
  * @subpackage Auth
  * @author     Mehdi Colin
- * @version    2.0.0
+ * @version    1.0.0
  * @since      1.0.0
  */
 class Auth
@@ -29,7 +28,6 @@ class Auth
     private ?ProjectRepository $projects;
     private ?CrawlRepository $crawls;
     private static $sessionStarted = false;
-    private static $hubChecked = false;
 
     /**
      * @param UserRepository|null $users Injection pour tests
@@ -53,12 +51,6 @@ class Auth
             $this->crawls = $crawls ?? new CrawlRepository();
         }
         $this->startSession();
-        
-        // Vérifier le cookie hub et synchroniser l'user (une seule fois par requête)
-        if (!$skipDb && !self::$hubChecked) {
-            self::$hubChecked = true;
-            $this->initFromHub();
-        }
     }
 
     /**
@@ -78,63 +70,35 @@ class Auth
     }
 
     /**
-     * Vérifie le cookie hub_session, synchronise l'user dans la BDD Scouter,
-     * et peuple $_SESSION pour que le reste de la classe fonctionne normalement.
-     */
-    private function initFromHub(): void
-    {
-        $hubUser = \verify_hub_session();
-        
-        if (!$hubUser) {
-            // Pas de session hub valide : nettoyer la session locale
-            $_SESSION['logged_in'] = false;
-            $_SESSION['user_id'] = null;
-            $_SESSION['email'] = null;
-            $_SESSION['role'] = null;
-            return;
-        }
-        
-        // Synchroniser/créer l'user dans la BDD Scouter
-        try {
-            $existing = $this->users->getByEmail($hubUser['email']);
-            
-            if ($existing) {
-                $userId = (int)$existing->id;
-                // Sync du rôle si différent
-                if (($existing->role ?? 'user') !== $hubUser['role']) {
-                    $this->users->update($userId, ['role' => $hubUser['role']]);
-                }
-            } else {
-                // Création d'un nouvel user (password aléatoire, jamais utilisé)
-                $randomPassword = bin2hex(random_bytes(32));
-                $userId = $this->users->create($hubUser['email'], $randomPassword, $hubUser['role']);
-            }
-            
-            // Peupler la session pour que le reste de la classe fonctionne
-            $_SESSION['logged_in'] = true;
-            $_SESSION['user_id'] = $userId;
-            $_SESSION['email'] = $hubUser['email'];
-            $_SESSION['role'] = $hubUser['role'];
-        } catch (\Exception $e) {
-            error_log('[Auth] Hub sync error: ' . $e->getMessage());
-            $_SESSION['logged_in'] = false;
-            $_SESSION['user_id'] = null;
-        }
-    }
-
-    /**
-     * @deprecated Auth déléguée au hub - cette méthode ne fait plus rien.
-     * Conservée pour compatibilité avec login.php.
-     * @return bool Toujours false
+     * Tente de connecter un utilisateur
+     * @param string $email Email de l'utilisateur
+     * @param string $password Mot de passe
+     * @return bool True si connexion réussie
      */
     public function login($email, $password)
     {
-        return false;
+        $user = $this->users->getByEmail($email);
+        
+        if (!$user) {
+            return false;
+        }
+        
+        if (!password_verify($password, $user->password_hash)) {
+            return false;
+        }
+        
+        // Connexion réussie — regenerate session ID to prevent session fixation
+        session_regenerate_id(true);
+        $_SESSION['user_id'] = $user->id;
+        $_SESSION['email'] = $user->email;
+        $_SESSION['role'] = $user->role ?? 'user';
+        $_SESSION['logged_in'] = true;
+        
+        return true;
     }
 
     /**
-     * Déconnecte l'utilisateur localement.
-     * Pour une déconnexion globale, redirige vers hub_url() . '/logout'
+     * Déconnecte l'utilisateur
      */
     public function logout()
     {
@@ -150,7 +114,6 @@ class Auth
         
         session_destroy();
         self::$sessionStarted = false;
-        self::$hubChecked = false;
     }
 
     /**
@@ -194,30 +157,32 @@ class Auth
     }
 
     /**
-     * Redirige vers la page de login (= le hub) si l'utilisateur n'est pas connecté
-     * @param string $loginUrl Ignoré, on redirige toujours vers le hub
+     * Redirige vers la page de login si l'utilisateur n'est pas connecté
+     * @param string $loginUrl URL de la page de login
      */
-    public function requireLogin($loginUrl = null)
+    public function requireLogin($loginUrl = '/web/login.php')
     {
         if (!$this->isLoggedIn()) {
-            $currentUrl = (isset($_SERVER['HTTPS']) ? 'https' : 'http') . '://' . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'];
-            header('Location: ' . \hub_url() . '/login?redirect=' . urlencode($currentUrl));
+            header('Location: ' . $loginUrl);
             exit;
         }
     }
 
     /**
-     * @deprecated L'auth est déléguée au hub, donc on considère toujours que des users existent.
-     * Conservée pour compatibilité avec login.php.
+     * Vérifie si des utilisateurs existent dans la base
+     * @return bool True si au moins un utilisateur existe
      */
     public function hasUsers()
     {
-        return true;
+        return $this->users->count() > 0;
     }
 
     /**
-     * @deprecated Les users sont créés via le hub.
-     * Conservée pour compatibilité.
+     * Enregistre un nouvel utilisateur
+     * @param string $email Email
+     * @param string $password Mot de passe
+     * @param string $role Rôle de l'utilisateur (admin, user, viewer)
+     * @return int|false L'ID de l'utilisateur créé ou false si email existe
      */
     public function register($email, $password, $role = 'user')
     {
@@ -536,7 +501,8 @@ class Auth
                 http_response_code(401);
                 die(json_encode(['error' => 'Non authentifié']));
             } else {
-                $this->redirectToHubLogin();
+                header('Location: /web/login.php');
+                exit;
             }
         }
 
@@ -563,7 +529,8 @@ class Auth
                 http_response_code(401);
                 die(json_encode(['error' => 'Non authentifié']));
             } else {
-                $this->redirectToHubLogin();
+                header('Location: /web/login.php');
+                exit;
             }
         }
 
@@ -610,7 +577,8 @@ class Auth
                 http_response_code(401);
                 die(json_encode(['error' => 'Non authentifié']));
             } else {
-                $this->redirectToHubLogin();
+                header('Location: /web/login.php');
+                exit;
             }
         }
 
@@ -620,18 +588,18 @@ class Auth
                 die(json_encode(['error' => 'Accès réservé aux administrateurs']));
             } else {
                 http_response_code(403);
-                die('<!DOCTYPE html><html><head><title>403 Accès refusé</title></head><body><h1>403 - Accès refusé</h1><p>Cette page est réservée aux administrateurs.</p></body></html>');
-            }
+                die('<!DOCTYPE html><html><head><title>403 Accès refusé</title></head><body><h1>403 - Accès refusé</h1><p>Cette page est réservée aux administrateurs.</p></body></html>');            }
         }
     }
 
     /**
-     * Requiert la connexion, sinon redirige vers le hub
+     * Requiert la connexion, sinon redirige vers login (pour pages HTML)
      */
     public function requireLoginOrRedirect(): void
     {
         if (!$this->isLoggedIn()) {
-            $this->redirectToHubLogin();
+            header('Location: /web/login.php');
+            exit;
         }
     }
 
@@ -644,15 +612,5 @@ class Auth
             http_response_code(401);
             die(json_encode(['error' => 'Non authentifié']));
         }
-    }
-
-    /**
-     * Helper privé : redirige vers la page de login du hub avec le redirect en paramètre
-     */
-    private function redirectToHubLogin(): void
-    {
-        $currentUrl = (isset($_SERVER['HTTPS']) ? 'https' : 'http') . '://' . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'];
-        header('Location: ' . \hub_url() . '/login?redirect=' . urlencode($currentUrl));
-        exit;
     }
 }

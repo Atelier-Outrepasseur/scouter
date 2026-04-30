@@ -16,7 +16,10 @@
             "App\\Util\\": "app/Util/",
             "App\\Cli\\": "app/Cli/",
             "Charts\\": "web/charts/"
-        }
+        },
+        "files": [
+            "app/Auth/helpers.php"
+        ]
     },
     "autoload-dev": {
         "psr-4": {"Tests\\": "tests/"}
