@@ -1,20 +1,21 @@
 /* Scouter Dashboard - Modern UI */
+@import url('https://fonts.googleapis.com/css2?family=Unbounded:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
 
 :root {
-    --primary-color: #4ECDC4;
-    --primary-dark: #3DB8AF;
-    --secondary-color: #44A08D;
-    --background: #F7F9FC;
+    --primary-color: #E0AA5C;
+    --primary-dark: #C8924A;
+    --secondary-color: #74704D;
+    --background: #FCF7EF;
     --card-bg: #FFFFFF;
-    --text-primary: #2C3E50;
-    --text-secondary: #7F8C8D;
-    --border-color: #E1E8ED;
-    --sidebar-bg: #2C3E50;
-    --sidebar-hover: #34495E;
+    --text-primary: #282725;
+    --text-secondary: #74704D;
+    --border-color: #CBCBCA;
+    --sidebar-bg: #282725;
+    --sidebar-hover: #3A3833;
     --success: #2ECC71;
-    --warning: #F39C12;
+    --warning: #E0AA5C;
     --danger: #E74C3C;
-    --info: #3498DB;
+    --info: #74704D;
 }
 
 * {
@@ -49,7 +50,7 @@
 }
 
 body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     background-color: var(--background);
     color: var(--text-primary);
     line-height: 1.6;
@@ -5333,4 +5334,15 @@ body {
     font-size: 0.7rem;
     font-weight: 600;
     letter-spacing: 0.02em;
+}
+
+/* === Atelier de l'Outrepasseur — Typographie titres === */
+.page-title,
+.modal-header h2,
+.form-section h3,
+.categories-sidebar-header h3,
+.cat-modal-title h2,
+.categories-empty h3 {
+    font-family: 'Unbounded', 'Plus Jakarta Sans', sans-serif;
+    font-weight: 700;
 }
