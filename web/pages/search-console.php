@@ -47,10 +47,10 @@ try {
         SELECT gp.id, gp.property_id, gp.display_name, gt.email
         FROM google_properties gp
         JOIN google_tokens gt ON gt.id = gp.token_id
-        WHERE gp.type = 'gsc'
+        WHERE gp.type = 'gsc' AND gt.user_id = :uid
         ORDER BY gp.id
     ");
-    $stmt->execute();
+    $stmt->execute([':uid' => $currentUserId]);
     $allGscProperties = $stmt->fetchAll(PDO::FETCH_OBJ);
 
     foreach ($allGscProperties as $prop) {
@@ -145,7 +145,6 @@ if ($stmt->fetchColumn() == 0) {
         msg.textContent = 'Synchronisation des mots-clés...';
         bar.style.width = '10%';
 
-        const email = '<?= addslashes($gscProperty->email) ?>';
         const propertyId = <?= $gscPropertyId ?>;
 
         try {
@@ -154,8 +153,9 @@ if ($stmt->fetchColumn() == 0) {
             bar.style.width = '10%';
             await fetch('<?= scouter_google_url() ?>/gsc/sync/keywords', {
                 method: 'POST',
+                credentials: 'include',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, propertyId })
+                body: JSON.stringify({ propertyId })
             });
 
             // 2. Sync pages
@@ -163,8 +163,9 @@ if ($stmt->fetchColumn() == 0) {
             bar.style.width = '40%';
             await fetch('<?= scouter_google_url() ?>/gsc/sync/pages', {
                 method: 'POST',
+                credentials: 'include',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, propertyId })
+                body: JSON.stringify({ propertyId })
             });
 
             // 3. Sync daily
@@ -172,8 +173,9 @@ if ($stmt->fetchColumn() == 0) {
             bar.style.width = '70%';
             await fetch('<?= scouter_google_url() ?>/gsc/sync/daily', {
                 method: 'POST',
+                credentials: 'include',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, propertyId })
+                body: JSON.stringify({ propertyId })
             });
 
             // Done
@@ -483,14 +485,14 @@ async function resyncGSC() {
     btn.disabled = true;
     btn.innerHTML = '<span class="material-symbols-outlined" style="font-size: 1rem; animation: gsc-spin 1s linear infinite;">sync</span> Sync...';
 
-    const email = '<?= addslashes($gscProperty->email) ?>';
     const propertyId = <?= $gscPropertyId ?>;
 
     try {
         await fetch('<?= scouter_google_url() ?>/sync/all', {
             method: 'POST',
+            credentials: 'include',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, gscPropertyId: propertyId })
+            body: JSON.stringify({ gscPropertyId: propertyId })
         });
         window.location.reload();
     } catch (err) {

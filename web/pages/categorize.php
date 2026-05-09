@@ -119,7 +119,7 @@ body {
 
 /* Panneau Éditeur - Style sidebar-panel (légèrement plus clair que la nav principale) */
 .categorize-panel:first-child {
-    background: #34495e; /* 5% plus clair que #2C3E50 pour distinction */
+    background: #3A3833; /* 5% plus clair que #282725 pour distinction */
     color: rgba(255, 255, 255, 0.9);
     border-left: 1px solid rgba(0, 0, 0, 0.3); /* Séparation avec la nav principale */
 }

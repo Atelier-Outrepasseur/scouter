@@ -3,10 +3,16 @@
  * PAGE : Export des données
  */
 
-// Récupérer l'email du compte Google connecté
+// Récupérer l'email du compte Google connecté POUR L'USER COURANT
 $googleEmail = null;
 try {
-    $stmt = $pdo->query("SELECT email FROM google_tokens ORDER BY updated_at DESC LIMIT 1");
+    $stmt = $pdo->prepare("
+        SELECT email FROM google_tokens
+        WHERE user_id = :uid
+        ORDER BY updated_at DESC
+        LIMIT 1
+    ");
+    $stmt->execute([':uid' => $currentUserId]);
     $row = $stmt->fetch();
     if ($row) $googleEmail = $row->email;
 } catch (Exception $e) {}
@@ -112,6 +118,7 @@ async function exportSheets() {
     try {
         const response = await fetch('<?= scouter_google_url() ?>/export/sheets', {
             method: 'POST',
+            credentials: 'include',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 email: '<?= addslashes($googleEmail) ?>',
@@ -158,6 +165,7 @@ async function exportSlides() {
     try {
         const response = await fetch('<?= scouter_google_url() ?>/export/slides', {
             method: 'POST',
+            credentials: 'include',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 email: '<?= addslashes($googleEmail) ?>',
