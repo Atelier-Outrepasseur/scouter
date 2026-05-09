@@ -56,9 +56,9 @@ $userInitials = getUserInitials($currentUserEmail);
 <header class="header">
     <a href="<?= $basePath ?>index.php" class="header-brand" style="text-decoration: none; color: inherit;">
         <div class="header-brand-icon">
-            <img src="<?= $basePath ?>logo.png" alt="Logo Scouter">
+            <img src="<?= $basePath ?>logo.png" alt="Logo PByWeb">
         </div>
-        <span>Scouter</span>
+        <span>Crawleur</span>
     </a>
     
     <?php if ($headerContext === 'dashboard' && isset($projectName)): ?>
