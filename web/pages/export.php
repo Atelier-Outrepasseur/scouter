@@ -21,6 +21,8 @@ try {
 
 <h1 class="page-title">Export des données</h1>
 
+<?php include __DIR__ . '/../components/google-reconnect.php'; ?>
+
 <div style="display: flex; flex-direction: column; gap: 1.5rem; max-width: 800px;">
 
     <!-- Export Google Sheets -->

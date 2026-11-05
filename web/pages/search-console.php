@@ -36,6 +36,9 @@ if (!$googleTablesExist) {
     return;
 }
 
+// Compte Google enregistré mais autorisation expirée ou révoquée : bouton « Reconnecter Google »
+include __DIR__ . '/../components/google-reconnect.php';
+
 // Chercher la propriété GSC
 $crawlDomain = rtrim($crawlRecord->domain ?? '', '/');
 $gscProperty = null;
