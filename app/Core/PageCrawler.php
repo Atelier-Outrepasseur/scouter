@@ -324,4 +324,4 @@ class PageCrawler
         }
         $this->crawlDb->insertHtml($this->page->id, $this->page->domZip);
     }
-}
+}

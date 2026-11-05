@@ -288,4 +288,4 @@ class Crawler
         }
         $this->depthStarter();
     }
-}
+}

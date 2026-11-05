@@ -200,7 +200,7 @@ class Auth
     public function requireLogin($loginUrl = null)
     {
         if (!$this->isLoggedIn()) {
-            $currentUrl = (isset($_SERVER['HTTPS']) ? 'https' : 'http') . '://' . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'];
+            $currentUrl = \current_public_url();
             header('Location: ' . \hub_url() . '/login?redirect=' . urlencode($currentUrl));
             exit;
         }
@@ -651,7 +651,7 @@ class Auth
      */
     private function redirectToHubLogin(): void
     {
-        $currentUrl = (isset($_SERVER['HTTPS']) ? 'https' : 'http') . '://' . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'];
+        $currentUrl = \current_public_url();
         header('Location: ' . \hub_url() . '/login?redirect=' . urlencode($currentUrl));
         exit;
     }

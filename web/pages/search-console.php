@@ -488,7 +488,7 @@ async function resyncGSC() {
     const propertyId = <?= $gscPropertyId ?>;
 
     try {
-        await fetch('<?= scouter_google_url() ?>/sync/all', {
+        await fetch('<?= scouter_google_url() ?>/gsc/sync/all', {
             method: 'POST',
             credentials: 'include',
             headers: { 'Content-Type': 'application/json' },
