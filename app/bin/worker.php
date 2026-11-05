@@ -304,6 +304,12 @@ while ($running) {
                     'PATH' => getenv('PATH'),
                     'PARTITIONS_CREATED' => '1'  // Indique au Crawler que les partitions sont déjà créées
                 ];
+                // Réglages du régulateur de crawl (facultatifs) : transmis s'ils sont définis
+                foreach (['CRAWL_TIMEOUT', 'CRAWL_CONNECT_TIMEOUT', 'CRAWL_MAX_PAUSE_SECONDS'] as $k) {
+                    if (getenv($k) !== false && getenv($k) !== '') {
+                        $env[$k] = getenv($k);
+                    }
+                }
 
                 $process = proc_open(
                     [$phpBin, $scouterScript, 'crawl', $projectDir],

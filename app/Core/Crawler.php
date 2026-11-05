@@ -232,6 +232,10 @@ class Crawler
                     unset($crawl, $urls);
                 }
             }
+        } catch (CrawlBlockedException $e) {
+            // Blocage durable du site : arrêt propre, reprise possible, rien n'est compté en erreur.
+            echo "\n\n\033[33m⏸ " . $e->getMessage() . "\033[0m\n";
+            (new \App\Database\CrawlRepository())->update($this->crawlId, ['status' => 'stopping']);
         } catch (\Exception $e) {
             if ($e->getMessage() === "Crawl stop signal received") {
                 echo "\n\n\033[33m! Crawl stopped by user\033[0m\n";

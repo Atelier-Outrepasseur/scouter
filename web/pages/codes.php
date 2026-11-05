@@ -92,8 +92,8 @@ foreach ($codeByCategory as $row) {
     <?php
     if ($codeFamilyStats->code_0xx > 0) {
         Component::card([
-            'color' => 'error',
-            'icon' => 'schedule',
+            'color' => 'warning',
+            'icon' => 'help',
             'title' => __('codes.card_timeout'),
             'value' => number_format($codeFamilyStats->code_0xx),
             'desc' => __('codes.card_timeout_desc')

@@ -161,7 +161,8 @@ class CrawlDatabase
         $fields = ['code', 'crawled', 'content_type', 'outlinks', 'date', 'nofollow', 
                    'compliant', 'noindex', 'canonical', 'canonical_value', 'redirect_to', 'response_time',
                    'title', 'h1', 'metadesc', 'title_status', 'h1_status', 'metadesc_status',
-                   'simhash', 'is_html', 'h1_multiple', 'headings_missing', 'word_count'];
+                   'simhash', 'is_html', 'h1_multiple', 'headings_missing', 'word_count',
+                   'fetch_status'];
         
         // Champs URL/texte indexés à tronquer pour éviter l'erreur B-tree index (max 8191 bytes)
         $urlFields = ['canonical_value', 'redirect_to'];
@@ -512,10 +513,11 @@ class CrawlDatabase
         $stmt->execute([':crawl_id' => $this->crawlId]);
         $urls = (int)$stmt->fetchColumn();
         
-        // URLs crawlées
-        $stmt = $this->db->prepare("SELECT COUNT(*) FROM pages WHERE crawl_id = :crawl_id AND crawled = true");
+        // URLs crawlées (= le site a répondu). Les URLs « non vérifiées » (blocage,
+        // délai dépassé, réseau) sont comptées à part : ce ne sont pas des erreurs.
+        $stmt = $this->db->prepare("SELECT COUNT(*) FILTER (WHERE fetch_status IS NULL), COUNT(*) FILTER (WHERE fetch_status IS NOT NULL) FROM pages WHERE crawl_id = :crawl_id AND crawled = true");
         $stmt->execute([':crawl_id' => $this->crawlId]);
-        $crawled = (int)$stmt->fetchColumn();
+        [$crawled, $unverified] = array_map('intval', $stmt->fetch(PDO::FETCH_NUM));
         
         // URLs compliant
         $stmt = $this->db->prepare("SELECT COUNT(*) FROM pages WHERE crawl_id = :crawl_id AND compliant = true");
@@ -551,7 +553,8 @@ class CrawlDatabase
                 duplicates = :duplicates,
                 response_time = :response_time,
                 depth_max = :depth_max,
-                in_progress = :in_progress
+                in_progress = :in_progress,
+                unverified = :unverified
             WHERE id = :id
         ");
         
@@ -563,6 +566,7 @@ class CrawlDatabase
             ':response_time' => round($responseTime, 2),
             ':depth_max' => $depthMax,
             ':in_progress' => $inProgress,
+            ':unverified' => $unverified,
             ':id' => $this->crawlId
         ]);
     }
