@@ -250,7 +250,7 @@ try {
             SELECT gsc.page FROM gsc_pages gsc
             JOIN google_properties gp ON gp.id = gsc.property_id
             JOIN pages p ON p.crawl_id = :cid AND p.url = gsc.page
-            WHERE p.code != 200 AND gsc.date >= NOW() - INTERVAL '30 days'
+            WHERE p.code != 200 AND p.fetch_status IS NULL AND gsc.date >= NOW() - INTERVAL '30 days'
             GROUP BY gsc.page HAVING SUM(gsc.clicks) > 0
         ) sub
     ");
