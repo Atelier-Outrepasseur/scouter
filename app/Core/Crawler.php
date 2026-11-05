@@ -235,7 +235,19 @@ class Crawler
         } catch (CrawlBlockedException $e) {
             // Blocage durable du site : arrêt propre, reprise possible, rien n'est compté en erreur.
             echo "\n\n\033[33m⏸ " . $e->getMessage() . "\033[0m\n";
-            (new \App\Database\CrawlRepository())->update($this->crawlId, ['status' => 'stopping']);
+            // Le JOB doit passer en « stopping », pas seulement le crawl : sinon scouter.php
+            // marque le job « completed » en fin de processus et la synchronisation de
+            // JobManager réécrit le crawl en « finished » (reprise impossible).
+            $crawlRepo = new \App\Database\CrawlRepository();
+            $record = $crawlRepo->getById($this->crawlId);
+            $jobManager = new \App\Job\JobManager();
+            $job = $record ? $jobManager->getJobByProject($record->path) : null;
+            if ($job) {
+                $jobManager->updateJobStatus($job->id, 'stopping');
+                $jobManager->addLog($job->id, $e->getMessage(), 'warning');
+            } else {
+                $crawlRepo->update($this->crawlId, ['status' => 'stopping']);
+            }
         } catch (\Exception $e) {
             if ($e->getMessage() === "Crawl stop signal received") {
                 echo "\n\n\033[33m! Crawl stopped by user\033[0m\n";

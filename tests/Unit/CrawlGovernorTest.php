@@ -140,6 +140,23 @@ describe('CrawlGovernor', function () {
         expect($g->stats()['ceiling'])->toBe(4.0);
     });
 
+    it('ne compte pour l\'abandon que les pauses depuis la dernière reprise du site', function () {
+        $g = governor('very_slow', null, 150);
+        $block = function () use ($g) { for ($i = 0; $i < 3; $i++) { $g->record(timeoutOutcome()); } };
+        $block(); $g->pause();             // 60 s
+        $block(); $g->pause();             // + 120 s = 180 s ≥ 150 s…
+        // …mais le site répond de nouveau normalement pendant un moment
+        for ($i = 0; $i < 30; $i++) { $g->record(ok()); }
+        $block();                          // nouveau blocage, bien plus tard
+        expect($g->shouldPause())->toBeTrue();
+        expect($g->shouldGiveUp())->toBeFalse();   // avant : abandon immédiat
+        $g->pause();                       // 60 s depuis la reprise
+        expect($g->shouldGiveUp())->toBeFalse();
+        $block(); $g->pause();             // + 120 s = 180 s sans réponse du site
+        expect($g->shouldGiveUp())->toBeTrue();
+        expect($g->stats()['paused_seconds'])->toBe(360);
+    });
+
     it('signale l\'abandon au-delà du temps de pause cumulé autorisé', function () {
         $g = governor('very_slow', null, 150);
         for ($i = 0; $i < 3; $i++) { $g->record(timeoutOutcome()); }

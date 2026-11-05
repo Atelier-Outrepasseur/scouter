@@ -187,9 +187,13 @@ class DepthCrawler
                     ));
                 }
                 $this->governor->pause(fn() => $this->checkStopSignal());
-                // Après une pause, les URLs reportées sont prêtes tout de suite.
+                // Après une pause, les URLs reportées sont prêtes tout de suite, et
+                // leurs essais repartent à zéro : leurs échecs venaient du blocage du
+                // site, pas des pages (un site qui bloque met le crawl en pause, il
+                // ne doit pas faire passer ses pages en « non vérifiées »).
                 foreach ($deferred as &$d) {
                     $d['at'] = 0.0;
+                    $d['attempts'] = 0;
                 }
                 unset($d);
             }

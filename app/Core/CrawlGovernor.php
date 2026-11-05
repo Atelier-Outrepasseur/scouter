@@ -18,8 +18,11 @@ namespace App\Core;
  *   +1 connexion, sans dépasser la vitesse choisie NI le plafond appris : quand
  *   un épisode de blocage commence à un débit donné, le régulateur ne remonte
  *   plus au-delà de ce débit moins 1 requête/s (il ne retourne pas se faire bannir).
- * - Abandon : au-delà de 30 minutes de pause cumulée (réglable), shouldGiveUp()
- *   devient vrai ; le crawl s'arrête alors proprement (reprise possible).
+ * - Abandon : au-delà de 30 minutes de pause (réglable) SANS que le site ait
+ *   répondu de nouveau entre-temps, shouldGiveUp() devient vrai ; le crawl
+ *   s'arrête alors proprement (reprise possible). Le compteur repart de zéro dès
+ *   que le site répond normalement : un blocage passager, même long, plus tôt
+ *   dans le crawl ne provoque plus l'abandon au blocage suivant.
  *
  * Une instance par crawl (registre statique) : l'état survit aux DepthCrawler
  * successifs d'un même crawl.
@@ -54,6 +57,8 @@ class CrawlGovernor
     private int $okStreak = 0;
     private int $nextPause = self::FIRST_PAUSE;
     private float $pausedTotal = 0.0;
+    /** Pause cumulée depuis la dernière fois où le site a de nouveau répondu */
+    private float $pausedSinceRecovery = 0.0;
     private int $pauseCount = 0;
     private int $slowdowns = 0;
     private array $signalsByKind = [];
@@ -160,8 +165,10 @@ class CrawlGovernor
         $this->consecutiveBlocks = 0;
         $this->okStreak++;
         if ($this->pauseCount > 0 && $this->okStreak === 5) {
-            // Le site répond de nouveau normalement : la prochaine pause repart à 60 s.
+            // Le site répond de nouveau normalement : la prochaine pause repart à 60 s
+            // et le compteur d'abandon repart de zéro.
             $this->nextPause = self::FIRST_PAUSE;
+            $this->pausedSinceRecovery = 0.0;
         }
         if ($this->okStreak >= self::RECOVERY_STREAK) {
             $this->okStreak = 0;
@@ -255,6 +262,7 @@ class CrawlGovernor
         }
         $slept = max((float)$duration, ($this->clock)() - $start);
         $this->pausedTotal += $slept;
+        $this->pausedSinceRecovery += $slept;
         $this->nextPause = min(self::MAX_PAUSE, $this->nextPause * 2);
         $this->pauseRequested = false;
         $this->window = [];
@@ -267,7 +275,7 @@ class CrawlGovernor
 
     public function shouldGiveUp(): bool
     {
-        return $this->pausedTotal >= $this->maxPauseTotal;
+        return $this->pausedSinceRecovery >= $this->maxPauseTotal;
     }
 
     public function stats(): array
@@ -278,6 +286,7 @@ class CrawlGovernor
             'slowdowns' => $this->slowdowns,
             'pauses' => $this->pauseCount,
             'paused_seconds' => (int)$this->pausedTotal,
+            'paused_since_recovery' => (int)$this->pausedSinceRecovery,
             'ceiling' => $this->ceiling,
             'signals' => $this->signalsByKind,
         ];
