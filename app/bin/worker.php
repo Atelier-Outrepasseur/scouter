@@ -347,7 +347,9 @@ while ($running) {
                 // Success - check if it was stopped or completed normally
                 if ($currentStatus === 'stopping') {
                     $jobManager->updateJobStatus($job->id, 'stopped');
-                    $jobManager->addLog($job->id, "Crawl stopped by user", 'warning');
+                    // Arrêt demandé par l'utilisateur OU par le crawler lui-même (site qui bloque
+                    // durablement : la raison figure dans le message précédent).
+                    $jobManager->addLog($job->id, "Crawl arrêté (reprise possible)", 'warning');
                     echo "[Worker $workerId] Job #{$job->id} stopped by user\n";
                 } else if ($currentStatus === 'running') {
                     $jobManager->updateJobStatus($job->id, 'completed');
