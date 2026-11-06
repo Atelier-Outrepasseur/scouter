@@ -17,9 +17,36 @@ try {
     if ($row) $googleEmail = $row->email;
 } catch (Exception $e) {}
 
+// Analyses facultatives lancées pour ce crawl ? Sinon, ces sections sortent « Non mesuré » dans les exports.
+$readiness = \App\Util\ExportReadiness::forCrawl($pdo, (int)$crawlId);
 ?>
 
+
 <h1 class="page-title">Export des données</h1>
+
+<?php include __DIR__ . '/../components/google-reconnect.php'; ?>
+
+<?php if (!$readiness['enrichment'] || !$readiness['pagespeed']): ?>
+<div id="export-not-measured" style="max-width: 800px; margin-bottom: 1.5rem; padding: 1rem 1.25rem; border-radius: 8px;
+     background: rgba(251, 140, 0, 0.08); border: 1px solid rgba(251, 140, 0, 0.45); color: var(--text-primary); font-size: 0.9rem;">
+    <div style="display: flex; align-items: center; gap: 0.5rem; font-weight: 600; margin-bottom: 0.4rem;">
+        <span class="material-symbols-outlined" style="color: #fb8c00;">warning</span>
+        Avant d'exporter : certaines analyses n'ont pas été lancées pour ce crawl
+    </div>
+    <ul style="margin: 0 0 0 1.5rem; padding: 0;">
+        <?php if (!$readiness['enrichment']): ?>
+        <li><strong>Enrichissement non lancé</strong> : images et texte alternatif, hreflang et Open Graph sortiront
+            « Non mesuré » dans le classeur et la présentation.
+            <a href="?crawl=<?= (int)$crawlId ?>&page=images" style="color: var(--primary-color);">Lancer l'enrichissement</a></li>
+        <?php endif; ?>
+        <?php if (!$readiness['pagespeed']): ?>
+        <li><strong>Analyse PageSpeed non lancée</strong> : la vitesse ressentie sortira « Non mesuré ».
+            <a href="?crawl=<?= (int)$crawlId ?>&page=pagespeed" style="color: var(--primary-color);">Lancer l'analyse PageSpeed</a></li>
+        <?php endif; ?>
+    </ul>
+    <p style="margin: 0.5rem 0 0; color: var(--text-secondary);">Vous pouvez exporter quand même ; relancez l'export une fois les analyses terminées.</p>
+</div>
+<?php endif; ?>
 
 <div style="display: flex; flex-direction: column; gap: 1.5rem; max-width: 800px;">
 
@@ -36,9 +63,9 @@ try {
         </div>
 
         <div style="background: var(--bg-secondary); border-radius: 8px; padding: 1rem; margin-bottom: 1.5rem; font-size: 0.85rem; color: var(--text-secondary);">
-            <strong>Onglets générés :</strong> Index, Todo, Codes de réponse, Balises Titres, Balises Desc, H1,
-            Nombre de mots, Temps de réponse, Profondeur, Maillage interne, Données structurées,
-            Images, Hreflang, PageSpeed
+            <strong>Onglets générés :</strong> Index (synthèse et graphiques), Todo (problèmes classés P0, P1, P2),
+            Code de réponse, Balises Titres, Balises Desc, Balises H1, Nombre de mots, Temps de réponse, Profondeur,
+            Maillage interne, Données structurées, Images, Hreflang, PageSpeed, Non vérifiées (URL sans réponse du site)
         </div>
 
         <?php if ($googleEmail): ?>
@@ -76,14 +103,15 @@ try {
             <div>
                 <h2 style="margin: 0; color: var(--text-primary); font-size: 1.2rem;">Google Slides</h2>
                 <p style="margin: 0.25rem 0 0; color: var(--text-secondary); font-size: 0.85rem;">
-                    Génère une présentation d'audit SEO avec les KPIs, analyses et recommandations
+                    Génère une présentation d'audit SEO de 10 diapositives, lisible par un client
                 </p>
             </div>
         </div>
 
         <div style="background: var(--bg-secondary); border-radius: 8px; padding: 1rem; margin-bottom: 1.5rem; font-size: 0.85rem; color: var(--text-secondary);">
-            <strong>Slides générées :</strong> Titre, Vue d'ensemble, Codes de réponse, Indexabilité, Balises titre,
-            Meta descriptions, H1, Nombre de mots, Temps de réponse, Profondeur, Maillage, Images, PageSpeed, Sitemap, Todolist
+            <strong>Diapositives générées :</strong> Couverture, Synthèse, Plan d'action, Codes de réponse et liens cassés,
+            Indexabilité, Titres, metas et H1, Contenu et temps de réponse, Maillage et profondeur, Images, Méthode et limites.
+            <br>Les graphiques sont ceux du dernier export Google Sheets de ce crawl ; s'il n'y en a pas, un classeur est créé.
         </div>
 
         <?php if ($googleEmail): ?>
@@ -105,99 +133,135 @@ try {
 </div>
 
 <script>
-async function exportSheets() {
-    const btn = document.getElementById('export-sheets-btn');
-    const status = document.getElementById('export-sheets-status');
+/*
+ * Exports en arrière-plan : on lance une tâche, puis on suit son avancement.
+ * Plus de requête qui reste ouverte pendant toute la création du document.
+ */
+const SG_URL = '<?= scouter_google_url() ?>';
+const EXPORT_EMAIL = <?= json_encode($googleEmail ?? '') ?>;
+const EXPORT_CRAWL_ID = <?= (int)$crawlId ?>;
+const EXPORT_UI = {
+    sheets: { btn: 'export-sheets-btn', status: 'export-sheets-status', icon: 'cloud_upload', label: 'Exporter vers Google Sheets', open: 'Ouvrir le Google Sheets', color: '#34a853' },
+    slides: { btn: 'export-slides-btn', status: 'export-slides-status', icon: 'slideshow', label: 'Exporter vers Google Slides', open: 'Ouvrir la présentation', color: '#f59e0b' }
+};
 
-    btn.disabled = true;
-    btn.style.opacity = '0.6';
-    btn.innerHTML = '<span class="material-symbols-outlined" style="font-size: 1.2rem; animation: spin 1s linear infinite;">sync</span> Export en cours...';
-    status.style.display = 'block';
-    status.innerHTML = '<p style="color: var(--text-secondary);">Création du Google Sheets et remplissage des données...</p>';
+function escapeHtml(s) {
+    return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
 
+/** Appel JSON robuste : une réponse non JSON (502, page d'erreur…) donne un message clair. */
+async function sgFetch(path, options = {}) {
+    let response;
     try {
-        const response = await fetch('<?= scouter_google_url() ?>/export/sheets', {
-            method: 'POST',
-            credentials: 'include',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                email: '<?= addslashes($googleEmail) ?>',
-                crawlId: <?= $crawlId ?>
-            })
-        });
+        response = await fetch(SG_URL + path, { credentials: 'include', ...options });
+    } catch (e) {
+        throw new Error("Le service d'export est injoignable (" + e.message + ')');
+    }
+    const text = await response.text();
+    let data = null;
+    try { data = JSON.parse(text); } catch (e) { /* réponse non JSON */ }
+    if (!response.ok) {
+        const msg = data && data.error ? data.error : "Le service d'export a répondu HTTP " + response.status + (data ? '' : ' (réponse inattendue)');
+        throw new Error(msg);
+    }
+    if (!data) throw new Error("Réponse inattendue du service d'export (HTTP " + response.status + ')');
+    return data;
+}
 
-        const data = await response.json();
+function setButton(kind, busy, text) {
+    const ui = EXPORT_UI[kind];
+    const btn = document.getElementById(ui.btn);
+    if (!btn) return;
+    btn.disabled = busy;
+    btn.style.opacity = busy ? '0.6' : '1';
+    btn.innerHTML = busy
+        ? '<span class="material-symbols-outlined" style="font-size: 1.2rem; animation: spin 1s linear infinite;">sync</span> ' + escapeHtml(text || 'Export en cours...')
+        : '<span class="material-symbols-outlined" style="font-size: 1.2rem;">' + ui.icon + '</span> ' + escapeHtml(text || ui.label);
+}
 
-        if (data.success && data.url) {
-            status.innerHTML = `
-                <div style="padding: 1rem; background: rgba(52, 168, 83, 0.1); border: 1px solid rgba(52, 168, 83, 0.3); border-radius: 8px;">
-                    <p style="color: #34a853; font-weight: 600; margin-bottom: 0.5rem;">Export terminé !</p>
-                    <a href="${data.url}" target="_blank" style="color: var(--primary-color); text-decoration: none; font-size: 0.95rem;">
-                        <span class="material-symbols-outlined" style="font-size: 1rem; vertical-align: middle;">open_in_new</span>
-                        Ouvrir le Google Sheets
-                    </a>
-                </div>
-            `;
-            btn.innerHTML = '<span class="material-symbols-outlined" style="font-size: 1.2rem;">cloud_upload</span> Exporter à nouveau';
-            btn.disabled = false;
-            btn.style.opacity = '1';
-        } else {
-            throw new Error(data.error || 'Erreur inconnue');
-        }
-    } catch (err) {
-        status.innerHTML = `<p style="color: #ea4335;">Erreur : ${err.message}</p>`;
-        btn.innerHTML = '<span class="material-symbols-outlined" style="font-size: 1.2rem;">cloud_upload</span> Réessayer';
-        btn.disabled = false;
-        btn.style.opacity = '1';
+function renderJob(kind, job) {
+    const ui = EXPORT_UI[kind];
+    const status = document.getElementById(ui.status);
+    if (!status || !job) return;
+    status.style.display = 'block';
+    const warnings = (job.warnings || []).length
+        ? '<ul style="margin: 0.5rem 0 0 1rem; color: #b45309; font-size: 0.85rem;">' + job.warnings.map(w => '<li>' + escapeHtml(w) + '</li>').join('') + '</ul>'
+        : '';
+    if (job.status === 'queued' || job.status === 'running') {
+        status.innerHTML =
+            '<p style="color: var(--text-secondary); margin-bottom: 0.4rem;">' + escapeHtml(job.step || 'En attente') + ' — ' + (job.progress || 0) + ' %</p>' +
+            '<div style="height: 6px; background: var(--border-color); border-radius: 3px; overflow: hidden;">' +
+            '<div style="height: 100%; width: ' + (job.progress || 0) + '%; background: ' + ui.color + '; transition: width .4s;"></div></div>' + warnings;
+    } else if (job.status === 'done') {
+        status.innerHTML =
+            '<div style="padding: 1rem; background: rgba(52, 168, 83, 0.08); border: 1px solid rgba(52, 168, 83, 0.3); border-radius: 8px;">' +
+            '<p style="color: ' + ui.color + '; font-weight: 600; margin-bottom: 0.5rem;">Export terminé</p>' +
+            '<a href="' + escapeHtml(job.url) + '" target="_blank" rel="noopener" style="color: var(--primary-color); text-decoration: none; font-size: 0.95rem;">' +
+            '<span class="material-symbols-outlined" style="font-size: 1rem; vertical-align: middle;">open_in_new</span> ' + ui.open + '</a>' + warnings + '</div>';
+    } else {
+        status.innerHTML =
+            '<div style="padding: 1rem; background: rgba(234, 67, 53, 0.08); border: 1px solid rgba(234, 67, 53, 0.3); border-radius: 8px;">' +
+            '<p style="color: #ea4335; font-weight: 600; margin-bottom: 0.3rem;">Export en échec</p>' +
+            '<p style="color: var(--text-primary); font-size: 0.9rem;">' + escapeHtml(job.error || 'Erreur inconnue') + '</p>' + warnings + '</div>';
     }
 }
 
-async function exportSlides() {
-    const btn = document.getElementById('export-slides-btn');
-    const status = document.getElementById('export-slides-status');
-
-    btn.disabled = true;
-    btn.style.opacity = '0.6';
-    btn.innerHTML = '<span class="material-symbols-outlined" style="font-size: 1.2rem; animation: spin 1s linear infinite;">sync</span> Génération en cours...';
-    status.style.display = 'block';
-    status.innerHTML = '<p style="color: var(--text-secondary);">Création de la présentation Google Slides...</p>';
-
-    try {
-        const response = await fetch('<?= scouter_google_url() ?>/export/slides', {
-            method: 'POST',
-            credentials: 'include',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                email: '<?= addslashes($googleEmail) ?>',
-                crawlId: <?= $crawlId ?>
-            })
-        });
-
-        const data = await response.json();
-
-        if (data.success && data.url) {
-            status.innerHTML = `
-                <div style="padding: 1rem; background: rgba(251, 188, 5, 0.1); border: 1px solid rgba(251, 188, 5, 0.3); border-radius: 8px;">
-                    <p style="color: #f59e0b; font-weight: 600; margin-bottom: 0.5rem;">Présentation créée !</p>
-                    <a href="${data.url}" target="_blank" style="color: var(--primary-color); text-decoration: none; font-size: 0.95rem;">
-                        <span class="material-symbols-outlined" style="font-size: 1rem; vertical-align: middle;">open_in_new</span>
-                        Ouvrir la présentation
-                    </a>
-                </div>
-            `;
-            btn.innerHTML = '<span class="material-symbols-outlined" style="font-size: 1.2rem;">slideshow</span> Exporter à nouveau';
-            btn.disabled = false;
-            btn.style.opacity = '1';
-        } else {
-            throw new Error(data.error || 'Erreur inconnue');
+async function followJob(kind, jobId) {
+    setButton(kind, true);
+    for (let errors = 0; ;) {
+        try {
+            const { job } = await sgFetch('/export/jobs/' + jobId);
+            errors = 0;
+            renderJob(kind, job);
+            if (job.status === 'done' || job.status === 'failed') {
+                setButton(kind, false, job.status === 'done' ? 'Exporter à nouveau' : 'Réessayer');
+                return;
+            }
+        } catch (e) {
+            // Coupure passagère : on réessaie, puis on affiche l'erreur
+            if (++errors >= 5) {
+                renderJob(kind, { status: 'failed', error: "Suivi de l'export impossible : " + e.message });
+                setButton(kind, false, 'Réessayer');
+                return;
+            }
         }
-    } catch (err) {
-        status.innerHTML = `<p style="color: #ea4335;">Erreur : ${err.message}</p>`;
-        btn.innerHTML = '<span class="material-symbols-outlined" style="font-size: 1.2rem;">slideshow</span> Réessayer';
-        btn.disabled = false;
-        btn.style.opacity = '1';
+        await new Promise(r => setTimeout(r, 2000));
     }
 }
+
+async function startExport(kind) {
+    setButton(kind, true, 'Lancement...');
+    renderJob(kind, { status: 'queued', step: 'Lancement de l\'export', progress: 0 });
+    try {
+        const { job } = await sgFetch('/export/' + kind, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: EXPORT_EMAIL, crawlId: EXPORT_CRAWL_ID })
+        });
+        renderJob(kind, job);
+        await followJob(kind, job.id);
+    } catch (e) {
+        renderJob(kind, { status: 'failed', error: e.message });
+        setButton(kind, false, 'Réessayer');
+    }
+}
+
+function exportSheets() { return startExport('sheets'); }
+function exportSlides() { return startExport('slides'); }
+
+// Au chargement : afficher le dernier export de ce crawl, et reprendre le suivi s'il est en cours
+(async () => {
+    if (!EXPORT_EMAIL) return;
+    try {
+        const { jobs } = await sgFetch('/export/jobs?crawlId=' + EXPORT_CRAWL_ID);
+        for (const kind of ['sheets', 'slides']) {
+            const last = jobs.find(j => j.kind === kind);
+            if (!last) continue;
+            renderJob(kind, last);
+            if (last.status === 'queued' || last.status === 'running') followJob(kind, last.id);
+        }
+    } catch (e) { /* page utilisable même si l'historique est indisponible */ }
+})();
 </script>
 
 <style>

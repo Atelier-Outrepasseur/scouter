@@ -36,6 +36,9 @@ if (!$googleTablesExist) {
     return;
 }
 
+// Compte Google enregistré mais autorisation expirée ou révoquée : bouton « Reconnecter Google »
+include __DIR__ . '/../components/google-reconnect.php';
+
 // Chercher la propriété GSC
 $crawlDomain = rtrim($crawlRecord->domain ?? '', '/');
 $gscProperty = null;
@@ -488,7 +491,7 @@ async function resyncGSC() {
     const propertyId = <?= $gscPropertyId ?>;
 
     try {
-        await fetch('<?= scouter_google_url() ?>/sync/all', {
+        await fetch('<?= scouter_google_url() ?>/gsc/sync/all', {
             method: 'POST',
             credentials: 'include',
             headers: { 'Content-Type': 'application/json' },

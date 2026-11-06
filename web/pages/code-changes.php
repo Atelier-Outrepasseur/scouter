@@ -139,7 +139,7 @@ foreach ($codeCatBase as $r) {
 $allCodeCatNames = array_unique(array_merge(array_keys($refCodeCatData), array_keys($baseCodeCatData)));
 
 // Build series: each code family × ref/base
-$codeFamilies = ['2xx' => [200,'2xx - OK'], '3xx' => [300,'3xx - Redirect'], '4xx' => [400,'4xx - Client Error'], '5xx' => [500,'5xx - Server Error'], '0xx' => [0,'0 - Timeout'], '1xx' => [100,'1xx - Info']];
+$codeFamilies = ['2xx' => [200,'2xx - OK'], '3xx' => [300,'3xx - Redirect'], '4xx' => [400,'4xx - Client Error'], '5xx' => [500,'5xx - Server Error'], '0xx' => [0,'0 - ' . __('codes.card_timeout')], '1xx' => [100,'1xx - Info']];
 $codeCatSeries = [];
 foreach ($codeFamilies as $fam => $info) {
     $refVals = [];

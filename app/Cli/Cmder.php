@@ -132,7 +132,10 @@ class Cmder
     
     $crawl = new Crawler([
         "crawl_id" => $crawlRecord->id,
-        "depthMax" => (int)($crawlRecord->depth_max ?? $data['general']['depthMax'] ?? 5),
+        // Limite de profondeur demandée = configuration du crawl. crawls.depth_max est
+        // réécrite par les statistiques (profondeur réellement atteinte) : la relire ici
+        // bornait un crawl repris à la profondeur atteinte avant son arrêt.
+        "depthMax" => (int)($data['general']['depthMax'] ?? $crawlRecord->depth_max ?? 5),
         "start" => $data['general']['start'],
         "pattern" => $data['general']['domains'] ?? [],
         "config" => $config,

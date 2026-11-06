@@ -73,6 +73,23 @@ class PageCrawler
         }, 3); // 3 tentatives max
     }
 
+    /**
+     * Enregistre une URL que le site n'a pas permis de vérifier (blocage, délai
+     * dépassé, erreur réseau ou de rendu). Ce n'est PAS une erreur de page :
+     * code 0, crawled = true pour clore l'URL, et la cause dans fetch_status.
+     */
+    public static function storeUnverified(CrawlDatabase $crawlDb, string $url, FetchOutcome $outcome): void
+    {
+        $crawlDb->updatePage(hash('crc32', $url, false), [
+            'code' => 0,
+            'crawled' => true,
+            'compliant' => false,
+            'response_time' => 0,
+            'fetch_status' => $outcome->unverifiedStatus(),
+            'date' => date('Y-m-d H:i:s'),
+        ]);
+    }
+
     private function isExternal($url){
         $external = 1;
         foreach($this->pattern as $domain){
@@ -134,7 +151,8 @@ class PageCrawler
             'is_html' => $this->page->is_html ?? false,
             'simhash' => $this->page->simhash ?? null,
             'h1_multiple' => $this->page->h1_multiple ?? false,
-            'headings_missing' => $this->page->headings_missing ?? false
+            'headings_missing' => $this->page->headings_missing ?? false,
+            'fetch_status' => null
         ];
         
         // Ajouter les extraits SEO si la page a du contenu
@@ -306,4 +324,4 @@ class PageCrawler
         }
         $this->crawlDb->insertHtml($this->page->id, $this->page->domZip);
     }
-}
+}

@@ -13,7 +13,7 @@ class HttpCodes
      */
     private static $codes = [
         // 0xx - Erreurs réseau/timeout
-        0 => 'Timeout',
+        0 => 'Non vérifiée (pas de réponse du site)',
         
         // 1xx - Informational
         100 => 'Continue',

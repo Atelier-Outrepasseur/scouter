@@ -79,7 +79,7 @@ $donutBaseData = [
 $sqlNonIndexable = "
     SELECT
         SUM(CASE WHEN compliant = true THEN 1 ELSE 0 END) as indexable,
-        SUM(CASE WHEN compliant = false AND code != 200 AND code IS NOT NULL THEN 1 ELSE 0 END) as bad_status,
+        SUM(CASE WHEN compliant = false AND code != 200 AND code IS NOT NULL AND fetch_status IS NULL THEN 1 ELSE 0 END) as bad_status,
         SUM(CASE WHEN compliant = false AND code = 200 AND noindex = true THEN 1 ELSE 0 END) as noindex_urls,
         SUM(CASE WHEN compliant = false AND code = 200 AND noindex = false AND canonical = false THEN 1 ELSE 0 END) as non_canonical
     FROM pages
@@ -116,7 +116,7 @@ $sqlIndexabilityByCategory = "
         SUM(CASE WHEN compliant = true THEN 1 ELSE 0 END) as indexable,
         SUM(CASE WHEN compliant = false AND canonical = false THEN 1 ELSE 0 END) as non_canonical,
         SUM(CASE WHEN compliant = false AND canonical = true AND noindex = true THEN 1 ELSE 0 END) as noindex,
-        SUM(CASE WHEN compliant = false AND canonical = true AND noindex = false AND code != 200 THEN 1 ELSE 0 END) as bad_status
+        SUM(CASE WHEN compliant = false AND canonical = true AND noindex = false AND code != 200 AND fetch_status IS NULL THEN 1 ELSE 0 END) as bad_status
     FROM pages
     WHERE crawl_id = :crawl_id AND crawled = true AND is_html = true
     GROUP BY cat_id
@@ -195,7 +195,7 @@ FROM (
         SUM(CASE WHEN compliant = true THEN 1 ELSE 0 END) AS indexable,
         SUM(CASE WHEN compliant = false AND canonical = false THEN 1 ELSE 0 END) AS non_canonical,
         SUM(CASE WHEN compliant = false AND canonical = true AND noindex = true THEN 1 ELSE 0 END) AS noindex,
-        SUM(CASE WHEN compliant = false AND canonical = true AND noindex = false AND code != 200 THEN 1 ELSE 0 END) AS bad_status
+        SUM(CASE WHEN compliant = false AND canonical = true AND noindex = false AND code != 200 AND fetch_status IS NULL THEN 1 ELSE 0 END) AS bad_status
     FROM pages@{$safeCrawlId} WHERE crawled = true AND is_html = true GROUP BY cat_id
 ) r
 FULL OUTER JOIN (
@@ -203,7 +203,7 @@ FULL OUTER JOIN (
         SUM(CASE WHEN compliant = true THEN 1 ELSE 0 END) AS indexable,
         SUM(CASE WHEN compliant = false AND canonical = false THEN 1 ELSE 0 END) AS non_canonical,
         SUM(CASE WHEN compliant = false AND canonical = true AND noindex = true THEN 1 ELSE 0 END) AS noindex,
-        SUM(CASE WHEN compliant = false AND canonical = true AND noindex = false AND code != 200 THEN 1 ELSE 0 END) AS bad_status
+        SUM(CASE WHEN compliant = false AND canonical = true AND noindex = false AND code != 200 AND fetch_status IS NULL THEN 1 ELSE 0 END) AS bad_status
     FROM pages@{$safeCompareId} WHERE crawled = true AND is_html = true GROUP BY cat_id
 ) b ON r.cat_id = b.cat_id
 ORDER BY cat_id";

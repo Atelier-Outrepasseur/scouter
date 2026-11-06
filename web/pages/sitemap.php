@@ -102,6 +102,7 @@ $sitemapNotIndexable = (int)$stmt->fetchColumn();
 $stmt = $pdo->prepare("
     SELECT s.url, p.code, p.noindex, p.canonical,
         CASE 
+            WHEN p.fetch_status IS NOT NULL THEN 'Non vérifiée (pas de réponse du site pendant le crawl)'
             WHEN p.code != 200 THEN 'Code HTTP ' || p.code
             WHEN p.noindex = true THEN 'noindex'
             WHEN p.canonical = false THEN 'canonical différent'

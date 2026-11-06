@@ -48,7 +48,7 @@ foreach ($codeDataRaw as $row) {
     switch ($row->code_family) {
         case 0:
             $obj->code = 0;
-            $obj->label = '0 - Timeout';
+            $obj->label = '0 - ' . __('codes.card_timeout');
             break;
         case 100:
             $obj->code = 100;

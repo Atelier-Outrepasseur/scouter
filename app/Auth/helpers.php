@@ -42,3 +42,25 @@ if (!function_exists('verify_hub_session')) {
         return $data['user'] ?? null;
     }
 }
+
+if (!function_exists('current_public_url')) {
+    /**
+     * URL publique de la requête en cours (pour revenir ici après connexion au hub).
+     * Derrière Traefik, le TLS est terminé en amont : PHP voit du http, on se fie
+     * donc à X-Forwarded-Proto (seules les valeurs http/https sont acceptées)
+     * et à X-Forwarded-Host.
+     */
+    function current_public_url(?string $path = null): string {
+        $proto = strtolower($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '');
+        if ($proto !== 'https' && $proto !== 'http') {
+            $proto = !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' ? 'https' : 'http';
+        }
+        // Hôte d'origine transmis par le proxy (Traefik pose X-Forwarded-Host),
+        // accepté seulement s'il a la forme d'un nom d'hôte[:port].
+        $host = $_SERVER['HTTP_X_FORWARDED_HOST'] ?? '';
+        if (!preg_match('/^[A-Za-z0-9.-]+(:[0-9]{1,5})?$/', $host)) {
+            $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+        }
+        return $proto . '://' . $host . ($path ?? ($_SERVER['REQUEST_URI'] ?? '/'));
+    }
+}
