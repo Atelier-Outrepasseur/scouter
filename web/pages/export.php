@@ -16,12 +16,37 @@ try {
     $row = $stmt->fetch();
     if ($row) $googleEmail = $row->email;
 } catch (Exception $e) {}
+
+// Analyses facultatives lancées pour ce crawl ? Sinon, ces sections sortent « Non mesuré » dans les exports.
+$readiness = \App\Util\ExportReadiness::forCrawl($pdo, (int)$crawlId);
 ?>
 
 
 <h1 class="page-title">Export des données</h1>
 
 <?php include __DIR__ . '/../components/google-reconnect.php'; ?>
+
+<?php if (!$readiness['enrichment'] || !$readiness['pagespeed']): ?>
+<div id="export-not-measured" style="max-width: 800px; margin-bottom: 1.5rem; padding: 1rem 1.25rem; border-radius: 8px;
+     background: rgba(251, 140, 0, 0.08); border: 1px solid rgba(251, 140, 0, 0.45); color: var(--text-primary); font-size: 0.9rem;">
+    <div style="display: flex; align-items: center; gap: 0.5rem; font-weight: 600; margin-bottom: 0.4rem;">
+        <span class="material-symbols-outlined" style="color: #fb8c00;">warning</span>
+        Avant d'exporter : certaines analyses n'ont pas été lancées pour ce crawl
+    </div>
+    <ul style="margin: 0 0 0 1.5rem; padding: 0;">
+        <?php if (!$readiness['enrichment']): ?>
+        <li><strong>Enrichissement non lancé</strong> : images et texte alternatif, hreflang et Open Graph sortiront
+            « Non mesuré » dans le classeur et la présentation.
+            <a href="?crawl=<?= (int)$crawlId ?>&page=images" style="color: var(--primary-color);">Lancer l'enrichissement</a></li>
+        <?php endif; ?>
+        <?php if (!$readiness['pagespeed']): ?>
+        <li><strong>Analyse PageSpeed non lancée</strong> : la vitesse ressentie sortira « Non mesuré ».
+            <a href="?crawl=<?= (int)$crawlId ?>&page=pagespeed" style="color: var(--primary-color);">Lancer l'analyse PageSpeed</a></li>
+        <?php endif; ?>
+    </ul>
+    <p style="margin: 0.5rem 0 0; color: var(--text-secondary);">Vous pouvez exporter quand même ; relancez l'export une fois les analyses terminées.</p>
+</div>
+<?php endif; ?>
 
 <div style="display: flex; flex-direction: column; gap: 1.5rem; max-width: 800px;">
 
@@ -38,9 +63,9 @@ try {
         </div>
 
         <div style="background: var(--bg-secondary); border-radius: 8px; padding: 1rem; margin-bottom: 1.5rem; font-size: 0.85rem; color: var(--text-secondary);">
-            <strong>Onglets générés :</strong> Index, Todo, Codes de réponse, Balises Titres, Balises Desc, H1,
-            Nombre de mots, Temps de réponse, Profondeur, Maillage interne, Données structurées,
-            Images, Hreflang, PageSpeed, Non vérifiées (URL sans réponse du site)
+            <strong>Onglets générés :</strong> Index (synthèse et graphiques), Todo (problèmes classés P0, P1, P2),
+            Code de réponse, Balises Titres, Balises Desc, Balises H1, Nombre de mots, Temps de réponse, Profondeur,
+            Maillage interne, Données structurées, Images, Hreflang, PageSpeed, Non vérifiées (URL sans réponse du site)
         </div>
 
         <?php if ($googleEmail): ?>
@@ -78,14 +103,15 @@ try {
             <div>
                 <h2 style="margin: 0; color: var(--text-primary); font-size: 1.2rem;">Google Slides</h2>
                 <p style="margin: 0.25rem 0 0; color: var(--text-secondary); font-size: 0.85rem;">
-                    Génère une présentation d'audit SEO avec les KPIs, analyses et recommandations
+                    Génère une présentation d'audit SEO de 10 diapositives, lisible par un client
                 </p>
             </div>
         </div>
 
         <div style="background: var(--bg-secondary); border-radius: 8px; padding: 1rem; margin-bottom: 1.5rem; font-size: 0.85rem; color: var(--text-secondary);">
-            <strong>Slides générées :</strong> Titre, Vue d'ensemble, Codes de réponse, Indexabilité, Balises titre,
-            Meta descriptions, H1, Nombre de mots, Temps de réponse, Profondeur, Maillage, Images, PageSpeed, Sitemap, Todolist
+            <strong>Diapositives générées :</strong> Couverture, Synthèse, Plan d'action, Codes de réponse et liens cassés,
+            Indexabilité, Titres, metas et H1, Contenu et temps de réponse, Maillage et profondeur, Images, Méthode et limites.
+            <br>Les graphiques sont ceux du dernier export Google Sheets de ce crawl ; s'il n'y en a pas, un classeur est créé.
         </div>
 
         <?php if ($googleEmail): ?>
