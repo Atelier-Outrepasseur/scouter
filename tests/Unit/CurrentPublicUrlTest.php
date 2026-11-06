@@ -13,8 +13,8 @@ describe('current_public_url (retour après connexion au hub)', function () {
         $_SERVER['HTTP_X_FORWARDED_PROTO'] = 'https';
         unset($_SERVER['HTTPS']);
         $_SERVER['HTTP_HOST'] = 'seo.outrepasseur.fr';
-        $_SERVER['REQUEST_URI'] = '/dashboard.php?crawl=43&page=export';
-        expect(current_public_url())->toBe('https://seo.outrepasseur.fr/dashboard.php?crawl=43&page=export');
+        $_SERVER['REQUEST_URI'] = '/dashboard.php?crawl=7&page=export';
+        expect(current_public_url())->toBe('https://seo.outrepasseur.fr/dashboard.php?crawl=7&page=export');
     });
 
     it('ignore une valeur X-Forwarded-Proto farfelue', function () {
